@@ -1,8 +1,8 @@
 diff --git a/src/corelib/io/qfilesystemengine_win.cpp b/src/corelib/io/qfilesystemengine_win.cpp
-index 81d3a71986..a64a734acf 100644
+index 81d3a71986..620f8ea4d0 100644
 --- a/src/corelib/io/qfilesystemengine_win.cpp
 +++ b/src/corelib/io/qfilesystemengine_win.cpp
-@@ -665,12 +665,12 @@ QFileSystemEntry QFileSystemEngine::absoluteName(const QFileSystemEntry &entry)
+@@ -665,12 +665,19 @@ QFileSystemEntry QFileSystemEngine::absoluteName(const QFileSystemEntry &entry)
  }
  
  #if defined(Q_CC_MINGW) && WINVER < 0x0602 //  Windows 8 onwards
@@ -13,6 +13,13 @@ index 81d3a71986..a64a734acf 100644
      FILE_ID_128 FileId;
  } FILE_ID_INFO, *PFILE_ID_INFO;
 -
++#else
++#if (_WIN32_WINNT < _WIN32_WINNT_WIN8)
++typedef struct _FILE_ID_INFO {
++    ULONGLONG VolumeSerialNumber;
++    FILE_ID_128 FileId;
++} FILE_ID_INFO, *PFILE_ID_INFO;
++#endif
 +#endif
  #endif // if defined (Q_CC_MINGW) && WINVER < 0x0602
  
