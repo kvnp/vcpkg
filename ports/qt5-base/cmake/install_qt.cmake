@@ -1,7 +1,7 @@
 include(qt_fix_makefile_install)
 
 function(install_qt)
-    if(CMAKE_HOST_WIN32)
+    if(CMAKE_HOST_WIN32 AND NOT VCPKG_TARGET_IS_MINGW)
         if (VCPKG_QMAKE_USE_NMAKE)
             find_program(NMAKE nmake REQUIRED)
             set(INVOKE "${NMAKE}")
@@ -17,6 +17,13 @@ function(install_qt)
         endif()
     else()
         find_program(MAKE make)
+        if(NOT MAKE)
+            message(STATUS "make not found. Looking for mingw32-make instead.")
+            find_program(MAKE mingw32-make)
+            if (NOT MAKE)
+                message(FATAL_ERROR "mingw32-make not found. Please make sure it's installed properly")
+            endif()
+        endif()
         set(INVOKE "${MAKE}" -j${VCPKG_CONCURRENCY})
         set(INVOKE_SINGLE "${MAKE}" -j1)
     endif()
@@ -25,17 +32,17 @@ function(install_qt)
     vcpkg_add_to_path(PREPEND "${PYTHON3_EXE_PATH}")
 
     if (CMAKE_HOST_WIN32)
-    # flex and bison for ANGLE library
-    vcpkg_find_acquire_program(FLEX)
-    get_filename_component(FLEX_EXE_PATH ${FLEX} DIRECTORY)
-    get_filename_component(FLEX_DIR ${FLEX_EXE_PATH} NAME)
+        # flex and bison for ANGLE library
+        vcpkg_find_acquire_program(FLEX)
+        get_filename_component(FLEX_EXE_PATH ${FLEX} DIRECTORY)
+        get_filename_component(FLEX_DIR ${FLEX_EXE_PATH} NAME)
 
-    file(COPY ${FLEX_EXE_PATH} DESTINATION "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-tools" )
-    set(FLEX_TEMP "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-tools/${FLEX_DIR}")
-    file(RENAME "${FLEX_TEMP}/win_bison.exe" "${FLEX_TEMP}/bison.exe")
-    file(RENAME "${FLEX_TEMP}/win_flex.exe" "${FLEX_TEMP}/flex.exe")
-    vcpkg_add_to_path("${FLEX_TEMP}")
-   endif()
+        file(COPY ${FLEX_EXE_PATH} DESTINATION "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-tools" )
+        set(FLEX_TEMP "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-tools/${FLEX_DIR}")
+        file(RENAME "${FLEX_TEMP}/win_bison.exe" "${FLEX_TEMP}/bison.exe")
+        file(RENAME "${FLEX_TEMP}/win_flex.exe" "${FLEX_TEMP}/flex.exe")
+        vcpkg_add_to_path("${FLEX_TEMP}")
+    endif()
 
    set(_path "$ENV{PATH}")
 
@@ -97,7 +104,7 @@ function(install_qt)
         )
 
         if(VCPKG_TARGET_IS_OSX)
-           # For some reason there will be an error on MacOSX without this clean!
+            # For some reason there will be an error on MacOSX without this clean!
             message(STATUS "Cleaning after build before install ${_build_triplet}")
             vcpkg_execute_required_process(
                 COMMAND ${INVOKE_SINGLE} clean
