@@ -7,6 +7,10 @@ vcpkg_download_distfile(GLIB_ARCHIVE
     SHA512 21176cb95fcab49a781d02789bf21191a96a34a6391f066699b3c20b414b3169c958bd86623deb34ca55912083862885f7a7d12b67cc041467da2ba94d9e83c3
 )
 
+if(VCPKG_TARGET_IS_WINDOWS)
+    vcpkg_acquire_msys(MSYS_ROOT)
+    vcpkg_add_to_path("${MSYS_ROOT}/usr/bin")
+endif()
 vcpkg_extract_source_archive(SOURCE_PATH
     ARCHIVE "${GLIB_ARCHIVE}"
     PATCHES
@@ -56,9 +60,6 @@ set(GLIB_SCRIPTS
     glib-mkenums
     gtester-report
 )
-if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
-    list(REMOVE_ITEM GLIB_SCRIPTS glib-gettextize)
-endif()
 foreach(script IN LISTS GLIB_SCRIPTS)
     file(RENAME "${CURRENT_PACKAGES_DIR}/bin/${script}" "${CURRENT_PACKAGES_DIR}/tools/${PORT}/${script}")
     file(REMOVE "${CURRENT_PACKAGES_DIR}/debug/bin/${script}")
