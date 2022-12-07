@@ -1,8 +1,8 @@
 function(find_qt_mkspec TARGET_PLATFORM_MKSPEC_OUT HOST_PLATFORM_MKSPEC_OUT EXT_HOST_TOOLS_OUT)
     ## Figure out QTs target mkspec
     if(NOT DEFINED VCPKG_QT_TARGET_MKSPEC)
-        message(STATUS "Figuring out qt target mkspec. Target arch ${VCPKG_TARGET_ARCHITECTURE}") 
-        if(VCPKG_TARGET_IS_WINDOWS)    
+        message(STATUS "Figuring out qt target mkspec. Target arch ${VCPKG_TARGET_ARCHITECTURE}")
+        if(VCPKG_TARGET_IS_WINDOWS)
             if(VCPKG_TARGET_IS_UWP)
                 if(VCPKG_PLATFORM_TOOLSET STREQUAL "v140")
                     set(msvc_year "2015")
@@ -14,15 +14,31 @@ function(find_qt_mkspec TARGET_PLATFORM_MKSPEC_OUT HOST_PLATFORM_MKSPEC_OUT EXT_
                     message(FATAL_ERROR "No target mkspec found!")
                 endif()
                 set(_tmp_targ_out "winrt-${VCPKG_TARGET_ARCHITECTURE}-msvc${msvc_year}")
-            else()            
+            else()
                 if("${VCPKG_TARGET_ARCHITECTURE}" MATCHES "arm64")
-                    message(STATUS "Figuring out arm64") 
+                    message(STATUS "Figuring out arm64")
                     set(_tmp_targ_out "win32-arm64-msvc2017") #mkspec does not have anything defined related to msvc2017 so this should work
                 else()
-                    set(_tmp_targ_out "win32-msvc")
+                    if(VCPKG_TARGET_IS_MINGW)
+                        execute_process(
+                            COMMAND gcc -v
+                            ERROR_VARIABLE GCC
+                            ERROR_STRIP_TRAILING_WHITESPACE)
+                        
+                        message(STATUS "${GCC}")
+                        if ("${GCC}" MATCHES "clang")
+                            message(STATUS "clang")
+                            set(_tmp_targ_out "win32-clang-g++")
+                        else()
+                            message(STATUS "g++")
+                            set(_tmp_targ_out "win32-g++")
+                        endif()
+                    else()
+                        set(_tmp_targ_out "win32-msvc")
+                    endif()
                 endif()
             endif()
-        elseif(VCPKG_TARGET_IS_LINUX)
+        elseif()
             set(_tmp_targ_out "linux-g++" )
         elseif(VCPKG_TARGET_IS_OSX)
             set(_tmp_targ_out "macx-clang") # switch to macx-g++ since vcpkg requires g++ to compile any way? 
@@ -30,7 +46,7 @@ function(find_qt_mkspec TARGET_PLATFORM_MKSPEC_OUT HOST_PLATFORM_MKSPEC_OUT EXT_
     else()
         set(_tmp_targ_out ${VCPKG_QT_TARGET_MKSPEC})
     endif()
-    message(STATUS "Target mkspec set to: ${_tmp_targ_out}") 
+    message(STATUS "Target mkspec set to: ${_tmp_targ_out}")
     set(${TARGET_PLATFORM_MKSPEC_OUT} ${_tmp_targ_out} PARENT_SCOPE)
     
     ## Figure out QTs host mkspec
